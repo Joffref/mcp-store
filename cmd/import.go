@@ -7,14 +7,18 @@ import (
 	"os"
 	"strings"
 
-	"github.com/beamlit/mcp-store/internal/config"
 	"github.com/beamlit/mcp-store/internal/docker"
 	"github.com/beamlit/mcp-store/internal/git"
 	"github.com/beamlit/mcp-store/internal/smithery"
+	"github.com/beamlit/mcp-store/internal/store"
 	"github.com/spf13/cobra"
 )
 
-var configPath string
+var (
+	configPath string
+	push       bool
+	registry   string
+)
 
 var importCmd = &cobra.Command{
 	Use:   "import",
@@ -26,13 +30,13 @@ var importCmd = &cobra.Command{
 			return
 		}
 
-		config := config.Config{}
-		err := config.Read(configPath)
+		store := store.Store{}
+		err := store.Read(configPath)
 		if err != nil {
 			log.Fatalf("Failed to read config file: %v", err)
 		}
 
-		err = config.Validate()
+		err = store.ValidateWithDefaultValues()
 		if err != nil {
 			log.Fatalf("Failed to validate config file: %v", err)
 		}
@@ -40,7 +44,7 @@ var importCmd = &cobra.Command{
 		os.MkdirAll("tmp", 0755)
 		defer os.RemoveAll("tmp")
 
-		for name, repository := range config.Repositories {
+		for name, repository := range store.Repositories {
 			repoPath := fmt.Sprintf("tmp/%s/%s", strings.Replace(repository.Repository, "https://github.com/", "", 1), repository.Branch)
 			_, err := git.CloneRepository(repoPath, repository.Branch, repository.Repository)
 			if err != nil {
@@ -53,7 +57,7 @@ var importCmd = &cobra.Command{
 				continue
 			}
 
-			imageName := fmt.Sprintf("ghcr.io/beamlit/store/%s:latest", name)
+			imageName := fmt.Sprintf("%s/%s:latest", registry, name)
 			smitheryDir := strings.TrimSuffix(repository.SmitheryPath, "smithery.yaml")
 
 			err = docker.Inject(context.Background(), fmt.Sprintf("%s/%s/Dockerfile", repoPath, smitheryDir), fmt.Sprintf("\"npx\",\"-y\",\"supergateway\",\"--stdio\",\"%s\"", cfg.ParsedCommand.String()))
@@ -67,6 +71,12 @@ var importCmd = &cobra.Command{
 				log.Printf("Failed to build image: %v", err)
 				continue
 			}
+			if push {
+				err = docker.PushImage(context.Background(), imageName)
+				if err != nil {
+					log.Printf("Failed to push image: %v", err)
+				}
+			}
 			git.DeleteRepository(repoPath)
 		}
 	},
@@ -74,5 +84,7 @@ var importCmd = &cobra.Command{
 
 func init() {
 	importCmd.Flags().StringVarP(&configPath, "config", "c", "", "The path to the config file")
+	importCmd.Flags().BoolVarP(&push, "push", "p", false, "Push the images to the registry")
+	importCmd.Flags().StringVarP(&registry, "registry", "r", "ghcr.io/beamlit/store", "The registry to push the images to")
 	rootCmd.AddCommand(importCmd)
 }
