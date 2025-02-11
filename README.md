@@ -1,6 +1,6 @@
 # MCP hub Importer
 
-A command-line interface (CLI) tool for importing and managing Machine Learning Control Planes (MCPs) from configuration files.
+A command-line interface (CLI) tool for importing Model Context Protocol servers (MCPs) from configuration files.
 
 ## Features
 
