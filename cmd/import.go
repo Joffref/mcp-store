@@ -57,7 +57,7 @@ var importCmd = &cobra.Command{
 				continue
 			}
 
-			imageName := fmt.Sprintf("%s/%s:latest", registry, name)
+			imageName := fmt.Sprintf("%s/%s:latest", strings.ToLower(registry), strings.ToLower(name))
 			smitheryDir := strings.TrimSuffix(repository.SmitheryPath, "smithery.yaml")
 
 			err = docker.Inject(context.Background(), fmt.Sprintf("%s/%s/Dockerfile", repoPath, smitheryDir), fmt.Sprintf("\"npx\",\"-y\",\"supergateway\",\"--stdio\",\"%s\"", cfg.ParsedCommand.String()))
