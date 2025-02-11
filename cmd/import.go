@@ -8,10 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/beamlit/mcp-store/internal/docker"
-	"github.com/beamlit/mcp-store/internal/git"
-	"github.com/beamlit/mcp-store/internal/smithery"
-	"github.com/beamlit/mcp-store/internal/store"
+	"github.com/beamlit/mcp-hub/internal/catalog"
+	"github.com/beamlit/mcp-hub/internal/docker"
+	"github.com/beamlit/mcp-hub/internal/git"
+	"github.com/beamlit/mcp-hub/internal/hub"
+	"github.com/beamlit/mcp-hub/internal/smithery"
 	"github.com/spf13/cobra"
 )
 
@@ -30,15 +31,15 @@ var (
 
 var importCmd = &cobra.Command{
 	Use:   "import",
-	Short: "Import MCPs from a directory",
-	Long:  `import is a CLI tool to import MCPs from a directory`,
+	Short: "Import MCPs from a config file",
+	Long:  `import is a CLI tool to import MCPs from a config file`,
 	Run:   runImport,
 }
 
 func init() {
 	importCmd.Flags().StringVarP(&configPath, "config", "c", "", "The path to the config file")
 	importCmd.Flags().BoolVarP(&push, "push", "p", false, "Push the images to the registry")
-	importCmd.Flags().StringVarP(&registry, "registry", "r", "ghcr.io/beamlit/store", "The registry to push the images to")
+	importCmd.Flags().StringVarP(&registry, "registry", "r", "ghcr.io/beamlit/hub", "The registry to push the images to")
 	importCmd.Flags().StringVarP(&mcp, "mcp", "m", "", "The MCP to import, if not provided, all MCPs will be imported")
 	rootCmd.AddCommand(importCmd)
 }
@@ -49,14 +50,14 @@ func runImport(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	store := store.Store{}
-	handleError("read config file", store.Read(configPath))
-	handleError("validate config file", store.ValidateWithDefaultValues())
+	hub := hub.Hub{}
+	handleError("read config file", hub.Read(configPath))
+	handleError("validate config file", hub.ValidateWithDefaultValues())
 
 	setupTempDirectory()
 	defer os.RemoveAll(tmpDir)
 
-	for name, repository := range store.Repositories {
+	for name, repository := range hub.Repositories {
 		if mcp != "" && mcp != name {
 			continue
 		}
@@ -67,7 +68,7 @@ func runImport(cmd *cobra.Command, args []string) {
 	}
 }
 
-func processRepository(name string, repository *store.Repository) error {
+func processRepository(name string, repository *hub.Repository) error {
 	repoPath := fmt.Sprintf("%s/%s/%s", tmpDir, strings.TrimPrefix(repository.Repository, githubPrefix), repository.Branch)
 	defer git.DeleteRepository(repoPath)
 
@@ -88,12 +89,15 @@ func processRepository(name string, repository *store.Repository) error {
 		return fmt.Errorf("build and push image: %w", err)
 	}
 
+	catalog := catalog.Catalog{}
+	handleError("load catalog", catalog.Load(name, repository, &cfg))
+	handleError("save catalog", catalog.Save())
 	return nil
 }
 
 func buildAndPushImage(cfg *smithery.SmitheryConfig, repoPath, smitheryDir, imageName string, deps []string) error {
 	dockerfilePath := filepath.Join(repoPath, smitheryDir, dockerfileDir)
-	if err := docker.Inject(context.Background(), dockerfilePath, cfg.ParsedCommand.String(), deps); err != nil {
+	if err := docker.Inject(context.Background(), dockerfilePath, cfg.ParsedCommand.Entrypoint(), deps); err != nil {
 		return fmt.Errorf("inject command: %w", err)
 	}
 
@@ -121,15 +125,15 @@ func setupTempDirectory() {
 	handleError("create temp directory", os.MkdirAll(tmpDir, 0755))
 }
 
-func manageDeps(repository *store.Repository) []string {
+func manageDeps(repository *hub.Repository) []string {
 	switch repository.PackageManager {
-	case store.PackageManagerNPM:
+	case hub.PackageManagerNPM:
 		return []string{}
-	case store.PackageManagerAPK:
+	case hub.PackageManagerAPK:
 		return []string{
 			"apk add --no-cache node npm",
 		}
-	case store.PackageManagerAPT:
+	case hub.PackageManagerAPT:
 		return []string{
 			"apt-get update",
 			"apt-get install -y nodejs npm",

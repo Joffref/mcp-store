@@ -1,4 +1,4 @@
-# MCP Store Importer
+# MCP hub Importer
 
 A command-line interface (CLI) tool for importing and managing Machine Learning Control Planes (MCPs) from configuration files.
 
@@ -12,7 +12,7 @@ A command-line interface (CLI) tool for importing and managing Machine Learning 
 ## Installation
 
 ```bash
-go install github.com/beamlit/mcp-store@latest
+go install github.com/beamlit/mcp-hub@latest
 ```
 
 ## Usage
@@ -20,24 +20,24 @@ go install github.com/beamlit/mcp-store@latest
 ### Import all MCPs from config
 
 ```bash
-mcp-store import --config store.yaml
+mcp-hub import --config hub.yaml
 ```
 
 ### Import a specific MCP
 
 ```bash
-mcp-store import --config store.yaml --mcp <mcp-name>
+mcp-hub import --config hub.yaml --mcp <mcp-name>
 ```
 
 ### Push images to registry
 
 ```bash
-mcp-store import --config store.yaml --push
+mcp-hub import --config hub.yaml --push
 ```
 
 ## Configuration
 
-Create a `store.yaml` file to define your MCPs. Example configuration:
+Create a `hub.yaml` file to define your MCPs. Example configuration:
 
 ```yaml
 repositories:
@@ -93,4 +93,4 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## Support
 
-If you encounter any issues or have questions, please file an issue on our [GitHub repository](https://github.com/beamlit/mcp-store/issues).
+If you encounter any issues or have questions, please file an issue on our [GitHub repository](https://github.com/beamlit/mcp-hub/issues).

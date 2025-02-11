@@ -9,9 +9,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "mcp-store-importer",
+	Use:   "mcp-hub-importer",
 	Short: "Import MCPs from a directory",
-	Long: `mcp-store-importer is a CLI tool to import MCPs from a config file.
+	Long: `mcp-hub-importer is a CLI tool to import MCPs from a config file.
 It supports validating and importing MCP configurations.`,
 }
 

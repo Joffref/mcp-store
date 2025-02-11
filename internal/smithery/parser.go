@@ -27,7 +27,7 @@ func Parse(path string, overrider []map[string]interface{}) (SmitheryConfig, err
 	if err != nil {
 		return SmitheryConfig{}, err
 	}
-
+	parsedCommand.Type = smithery.StartCommand.Type
 	if err := smithery.ApplyOverrides(overrider); err != nil {
 		return SmitheryConfig{}, fmt.Errorf("failed to apply overrides: %w", err)
 	}
@@ -45,6 +45,9 @@ func ExecuteCommandFunction(commandFn string, config map[string]Property) (*Comm
 	for key, prop := range config {
 		// For now, we'll use the Default value if it exists, otherwise empty string
 		jsConfig[key] = prop.Default
+		if jsConfig[key] == "" {
+			jsConfig[key] = "$" + key
+		}
 	}
 
 	// Inject the simplified config into VM

@@ -1,4 +1,4 @@
-name: MCP Store Build and Push
+name: MCP hub Build and Push
 on:
   push:
     branches:
@@ -36,11 +36,11 @@ jobs:
           go-version: '1.23.3'
       - name: Install dependencies
         run: go get .
-      - name: Validate store
-        run: go run main.go validate -c store.yaml
+      - name: Validate hub
+        run: go run main.go validate -c hub.yaml
       - name: Build and push
         if: inputs.approve == ''
-        run: go run main.go import -c store.yaml -p -r ${{ env.REGISTRY }}/${{ github.repository }}
+        run: go run main.go import -c hub.yaml -p -r ${{ env.REGISTRY }}/${{ github.repository }}
       - name: Build and push
         if: inputs.approve != ''
-        run: go run main.go import -c store.yaml -p -r ${{ env.REGISTRY }}/${{ github.repository }} -m ${{ inputs.mcp }}
+        run: go run main.go import -c hub.yaml -p -r ${{ env.REGISTRY }}/${{ github.repository }} -m ${{ inputs.mcp }}

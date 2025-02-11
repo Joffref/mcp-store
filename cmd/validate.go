@@ -3,13 +3,13 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/beamlit/mcp-store/internal/store"
+	"github.com/beamlit/mcp-hub/internal/hub"
 	"github.com/spf13/cobra"
 )
 
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validate the MCP store",
+	Short: "Validate the MCP hub",
 	Run:   runValidate,
 }
 
@@ -24,9 +24,9 @@ func runValidate(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	store := store.Store{}
-	handleError("read config file", store.Read(configPath))
-	handleError("validate config file", store.ValidateWithDefaultValues())
+	hub := hub.Hub{}
+	handleError("read config file", hub.Read(configPath))
+	handleError("validate config file", hub.ValidateWithDefaultValues())
 
 	// Print validation success message
 	fmt.Println("Configuration validated successfully")

@@ -1,4 +1,4 @@
-package store
+package hub
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Store struct {
+type Hub struct {
 	Repositories map[string]*Repository `yaml:"repositories"`
 }
 
@@ -36,25 +36,25 @@ type Repository struct {
 	Categories      []string                 `yaml:"categories"`
 }
 
-func (s *Store) Read(path string) error {
+func (h *Hub) Read(path string) error {
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	return yaml.Unmarshal(yamlFile, s)
+	return yaml.Unmarshal(yamlFile, h)
 }
 
-// ValidateWithDefaultValues validates the store and applies default values to empty fields
-// This is useful to validate the store before running the import command
-func (s *Store) ValidateWithDefaultValues() error {
-	if s.Repositories == nil {
+// ValidateWithDefaultValues validates the hub and applies default values to empty fields
+// This is useful to validate the hub before running the import command
+func (h *Hub) ValidateWithDefaultValues() error {
+	if h.Repositories == nil {
 		return errors.New("repositories is required")
 	}
 
 	var errs []error
 
-	for name, repository := range s.Repositories {
+	for name, repository := range h.Repositories {
 		// Use reflection to validate struct tags
 		v := reflect.ValueOf(repository).Elem() // Get the element the pointer refers to
 		t := v.Type()

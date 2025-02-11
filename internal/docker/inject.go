@@ -9,8 +9,6 @@ import (
 )
 
 func Inject(ctx context.Context, dockerFilePath string, cmd string, deps []string) error {
-	useEntrypoint := strings.Contains(cmd, "docker") // In case of docker, we need to use the entrypoint to run the command
-
 	dockerFile, err := os.Open(dockerFilePath)
 	if err != nil {
 		return err
@@ -42,31 +40,23 @@ func Inject(ctx context.Context, dockerFilePath string, cmd string, deps []strin
 	lastIndex := lastCmdIndex
 	if lastEntrypointIndex > lastCmdIndex {
 		lastIndex = lastEntrypointIndex
-		if useEntrypoint {
-			entrypoint := strings.Split(cmd, ",")[:len(strings.Split(cmd, ","))-1]
-			entryPointFromLastIndex := strings.Split(lines[lastIndex], "ENTRYPOINT [")[1]
-			entryPointFromLastIndex = strings.Split(entryPointFromLastIndex, "]")[0]
-			lines[lastIndex] = fmt.Sprintf("ENTRYPOINT [%s,%s]", strings.Join(entrypoint, ","), entryPointFromLastIndex)
-		} else {
-			lines[lastIndex] = fmt.Sprintf("ENTRYPOINT [\"supergateway\",\"--stdio\",\"%s\"]", cmd)
-		}
-	} else if lastIndex != -1 {
-		if useEntrypoint {
-			entrypoint := strings.Split(cmd, ",")[:len(strings.Split(cmd, ","))-1]
-			entryPointFromLastIndex := strings.Split(lines[lastIndex], "CMD [")[1]
-			entryPointFromLastIndex = strings.Split(entryPointFromLastIndex, "]")[0]
-			lines[lastIndex] = fmt.Sprintf("CMD [%s,%s]", strings.Join(entrypoint, ","), entryPointFromLastIndex)
-		} else {
-			lines[lastIndex] = fmt.Sprintf("CMD [\"supergateway\",\"--stdio\",\"%s\"]", cmd)
-		}
 	}
 
-	// Add a newline before the last line
-	if len(lines) > 0 {
+	// Add RUN commands on  the last ENTRYPOINT/CMD
+	if lastIndex != -1 && len(deps) > 0 {
+		// Split the lines into before and after the last ENTRYPOINT/CMD
+		before := lines[:lastIndex-1]
+		after := lines[lastIndex-1:]
+
+		// Add RUN commands
 		for _, dep := range deps {
-			lines = append(lines[:len(lines)-1], fmt.Sprintf("RUN %s", dep), lines[len(lines)-1])
+			before = append(before, fmt.Sprintf("RUN %s", dep))
 		}
+
+		// Combine everything back together
+		lines = append(before, after...)
 	}
 
+	lines[len(lines)-1] = fmt.Sprintf("ENTRYPOINT [%s]", cmd)
 	return os.WriteFile(dockerFilePath, []byte(strings.Join(lines, "\n")), 0644)
 }

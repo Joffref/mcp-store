@@ -18,13 +18,20 @@ type Build struct {
 }
 
 type Command struct {
+	Type    string            `json:"type"`
 	Command string            `json:"command"`
 	Args    []string          `json:"args"`
 	Env     map[string]string `json:"env"`
 }
 
-func (c *Command) String() string {
-	return fmt.Sprintf("\"npx\",\"-y\",\"supergateway\",\"--stdio\",\"%s\"", fmt.Sprintf("%s %s", c.Command, strings.Join(c.Args, " ")))
+func (c *Command) Entrypoint() string {
+	switch c.Type {
+	case "stdio":
+		return "\"npx\",\"-y\",\"supergateway\",\"--stdio\""
+	case "sse":
+		return "\"npx\",\"-y\",\"supergateway\",\"--sse\""
+	}
+	return ""
 }
 
 type StartCommand struct {

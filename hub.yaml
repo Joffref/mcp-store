@@ -3,7 +3,6 @@ repositories:
     repository: https://github.com/smithery-ai/reference-servers.git
     smitheryPath: src/github/smithery.yaml
     dockerfile: src/github/Dockerfile
-    packageManager: npm
     branch: main
     displayName: GitHub
     icon: https://github.com/smithery-ai/reference-servers/blob/main/src/github/gtasks-mcp/logo.jpg
