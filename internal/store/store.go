@@ -13,17 +13,27 @@ type Store struct {
 	Repositories map[string]*Repository `yaml:"repositories"`
 }
 
+type PackageManager string
+
+const (
+	PackageManagerNPM PackageManager = "npm"
+	PackageManagerAPK PackageManager = "apk"
+	PackageManagerAPT PackageManager = "apt"
+)
+
 type Repository struct {
-	Repository      string   `yaml:"repository" mendatory:"true"`
-	SmitheryPath    string   `yaml:"smitheryPath" mendatory:"false" default:"smithery.yaml"`
-	Dockerfile      string   `yaml:"dockerfile" mendatory:"false" default:"Dockerfile"`
-	Branch          string   `yaml:"branch" mendatory:"false" default:"main"`
-	DisplayName     string   `yaml:"displayName" mendatory:"true"`
-	Icon            string   `yaml:"icon" mendatory:"true"`
-	Description     string   `yaml:"description" mendatory:"true"`
-	LongDescription string   `yaml:"longDescription" mendatory:"true"`
-	Tags            []string `yaml:"tags"`
-	Categories      []string `yaml:"categories"`
+	Repository      string                   `yaml:"repository" mendatory:"true"`
+	SmitheryPath    string                   `yaml:"smitheryPath" mendatory:"false" default:"smithery.yaml"`
+	Dockerfile      string                   `yaml:"dockerfile" mendatory:"false" default:"Dockerfile"`
+	PackageManager  PackageManager           `yaml:"packageManager" mendatory:"false" default:"npm"`
+	Branch          string                   `yaml:"branch" mendatory:"false" default:"main"`
+	DisplayName     string                   `yaml:"displayName" mendatory:"true"`
+	Icon            string                   `yaml:"icon" mendatory:"true"`
+	Description     string                   `yaml:"description" mendatory:"true"`
+	LongDescription string                   `yaml:"longDescription" mendatory:"true"`
+	Overrider       []map[string]interface{} `yaml:"overrider"`
+	Tags            []string                 `yaml:"tags"`
+	Categories      []string                 `yaml:"categories"`
 }
 
 func (s *Store) Read(path string) error {

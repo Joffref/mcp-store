@@ -2,6 +2,7 @@ package smithery
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -23,7 +24,7 @@ type Command struct {
 }
 
 func (c *Command) String() string {
-	return fmt.Sprintf("%s %s", c.Command, strings.Join(c.Args, " "))
+	return fmt.Sprintf("\"npx\",\"-y\",\"supergateway\",\"--stdio\",\"%s\"", fmt.Sprintf("%s %s", c.Command, strings.Join(c.Args, " ")))
 }
 
 type StartCommand struct {
@@ -42,4 +43,65 @@ type Property struct {
 	Type        string `yaml:"type"`
 	Default     string `yaml:"default"`
 	Description string `yaml:"description"`
+}
+
+func (c *SmitheryConfig) ApplyOverrides(overrides []map[string]interface{}) error {
+	for _, override := range overrides {
+		for key, value := range override {
+			parts := strings.Split(key, ".")
+			current := reflect.ValueOf(c).Elem()
+
+			// Navigate through all parts except the last one
+			for i := 0; i < len(parts)-1; i++ {
+				if !current.IsValid() {
+					return fmt.Errorf("invalid path: %s", key)
+				}
+
+				// Get the field first
+				field := current.FieldByName(Title(parts[i]))
+				if !field.IsValid() {
+					return fmt.Errorf("field not found: %s in path %s", parts[i], key)
+				}
+
+				// Handle pointer types
+				if field.Kind() == reflect.Ptr {
+					if field.IsNil() {
+						// Initialize nil pointer
+						field.Set(reflect.New(field.Type().Elem()))
+					}
+					field = field.Elem()
+				}
+
+				fmt.Printf("Current field: %s, Type: %s, Kind: %s\n", parts[i], field.Type().Name(), field.Kind())
+				current = field
+			}
+
+			// Handle the last field
+			if !current.IsValid() {
+				return fmt.Errorf("invalid path: %s", key)
+			}
+
+			lastField := current.FieldByName(Title(parts[len(parts)-1]))
+			if !lastField.IsValid() {
+				return fmt.Errorf("field not found: %s in path %s", parts[len(parts)-1], key)
+			}
+
+			// Handle pointer for the last field
+			if lastField.Kind() == reflect.Ptr {
+				if lastField.IsNil() {
+					lastField.Set(reflect.New(lastField.Type().Elem()))
+				}
+				lastField = lastField.Elem()
+			}
+
+			// Set the value based on the field's type
+			switch lastField.Kind() {
+			case reflect.String:
+				lastField.SetString(fmt.Sprint(value))
+			default:
+				return fmt.Errorf("unsupported field type %v for field %s", lastField.Kind(), key)
+			}
+		}
+	}
+	return nil
 }

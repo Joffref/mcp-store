@@ -1,3 +1,45 @@
+# MCP Store Importer
+
+A command-line interface (CLI) tool for importing and managing Machine Learning Control Planes (MCPs) from configuration files.
+
+## Features
+
+- Import MCPs from YAML configuration files
+- Selectively import specific MCPs
+- Push container images to registries
+- Validate MCP configurations
+
+## Installation
+
+```bash
+go install github.com/beamlit/mcp-store@latest
+```
+
+## Usage
+
+### Import all MCPs from config
+
+```bash
+mcp-store import --config store.yaml
+```
+
+### Import a specific MCP
+
+```bash
+mcp-store import --config store.yaml --mcp <mcp-name>
+```
+
+### Push images to registry
+
+```bash
+mcp-store import --config store.yaml --push
+```
+
+## Configuration
+
+Create a `store.yaml` file to define your MCPs. Example configuration:
+
+```yaml
 repositories:
   github-smithery-reference-servers:
     repository: https://github.com/smithery-ai/reference-servers.git
@@ -12,14 +54,7 @@ repositories:
     tags:
       - reference-servers
       - smithery
-      - github
-      - gtasks-mcp
-      - gtasks-mcp-smithery
-      - gtasks-mcp-smithery-reference-servers
     categories:
-      - reference-servers
-      - smithery
-      - github
       - gtasks-mcp
       - gtasks-mcp-smithery
       - gtasks-mcp-smithery-reference-servers
@@ -34,41 +69,28 @@ repositories:
     description: A search engine for Brave.
     longDescription: A search engine for Brave.
     tags:
-      - reference-servers
-      - smithery
-      - github
       - brave-search
       - brave-search-smithery
       - brave-search-smithery-reference-servers
     categories:
-      - reference-servers
-      - smithery
-      - github
       - brave-search
       - brave-search-smithery
       - brave-search-smithery-reference-servers
-  
-  sentry:
-    repository: https://github.com/smithery-ai/reference-servers.git
-    smitheryPath: src/sentry/smithery.yaml
-    dockerfile: src/sentry/Dockerfile
-    branch: main
-    packageManager: apt
-    displayName: Sentry
-    icon: https://github.com/smithery-ai/reference-servers/blob/main/src/sentry/logo.jpg
-    description: An MCP Toolkit for Sentry.
-    longDescription: An MCP Toolkit for Sentry.
-    overrider:
-      - build.dockerBuildPath: "."
-    tags:
-      - reference-servers
-      - smithery
-      - github
-      - sentry
-      - sentry-smithery
-      - sentry-smithery-reference-servers
-    categories:
-      - reference-servers
-      - smithery
-      - github
-      - sentry
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
+
+## Acknowledgements
+
+- [smithery](https://smithery.ai/) - For establishing the MCP package standard
+- All our contributors and supporters
+
+## Support
+
+If you encounter any issues or have questions, please file an issue on our [GitHub repository](https://github.com/beamlit/mcp-store/issues).
